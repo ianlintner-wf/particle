@@ -1,62 +1,68 @@
 /**
  * Webpack config for design system
  */
+
 const path = require('path');
 
-const sassExportData = require('@theme-tools/sass-export-data');
 const SVGSpritemapPlugin = require('svg-spritemap-webpack-plugin');
 
-const { sets } = require('./namespaces');
+const namespaces = require('./namespaces');
 
-const PATH_PATTERNS = path.resolve(__dirname, '_patterns');
+// Constants: root
+const { ASSETS_ATOMIC_FOLDER } = require('../../particle.root.config');
 
 module.exports = {
   module: {
     rules: [
       {
-        test: /\.(sa|sc|c)ss$/,
+        test: /\.css$/,
         use: [
           {
-            loader: 'sass-loader',
+            loader: 'postcss-loader',
             options: {
-              // Used to generate JSON about variables like colors, fonts
-              functions: sassExportData({
-                name: 'export_data',
-                path: path.resolve(__dirname, '_data/'),
-              }),
-              // Enable Sass to import other components via, eg:
-              // `@import 01-atoms/thing/thing`
-              includePaths: [PATH_PATTERNS],
+              config: {
+                path: path.join('postcss.config.js'),
+                ctx: {
+                  // PostCSS Tailwind config
+                  tailwindConfig: path.resolve(__dirname, 'tailwind.config.js'),
+                },
+              },
             },
           },
         ],
+      },
+      {
+        test: /\.svg$/,
+        loader: 'file-loader',
+        options: {
+          name: '[path][name].[ext]',
+          outputPath: ASSETS_ATOMIC_FOLDER,
+          context: path.resolve(__dirname),
+          emit: true,
+        },
       },
     ],
   },
   plugins: [
     // Sprite system options
     new SVGSpritemapPlugin(
-      path.resolve(PATH_PATTERNS, '01-atoms/svgicon/svg/**/*.svg'),
+      path.resolve(namespaces.atoms, 'svg/icons/**/*.svg'),
       {
-        styles: {
-          filename: path.resolve(
-            PATH_PATTERNS,
-            '01-atoms/svgicon/scss/_icons-generated.scss'
-          ),
-          variables: {
-            sizes: 'svgicon-sizes', // Prevent collision with Bootstrap $sizes
-            variables: 'svgicon-variables',
-          },
-        },
         output: {
+          filename: 'images/spritemap.svg',
           svg4everybody: true,
           svgo: true,
+        },
+        styles: {
+          filename: '~svg-icons.css',
         },
       }
     ),
   ],
   resolve: {
-    // Shorthand to import modules, i.e. `import thing from 'atoms/thing';`
-    alias: sets,
+    // JavaScript can import other components via shorthand, eg:
+    //   `import thing from 'atoms/thing';`
+    alias: namespaces,
+    extensions: ['.js', '.json'],
   },
 };

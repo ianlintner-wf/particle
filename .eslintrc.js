@@ -11,6 +11,7 @@ module.exports = {
     'plugin:jest/recommended',
     'plugin:vue/recommended',
     'plugin:prettier/recommended',
+    'prettier/vue',
   ],
   plugins: ['prettier'],
   root: true,
@@ -22,6 +23,7 @@ module.exports = {
   },
   env: {
     browser: true,
+    node: true,
   },
   rules: {
     'no-console': [0], // turned off for now while we are console.logging everywhere.

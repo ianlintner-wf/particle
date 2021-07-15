@@ -8,12 +8,7 @@
 // Library Imports
 const { ProgressPlugin, ProvidePlugin } = require('webpack');
 
-// Loaders
-const postcssPresetEnv = require('postcss-preset-env');
-const cssnano = require('cssnano');
-
 // Plugins
-const StyleLintPlugin = require('stylelint-webpack-plugin');
 const VueLoaderPlugin = require('vue-loader/lib/plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 
@@ -50,7 +45,7 @@ module.exports = {
         },
       },
       {
-        test: /\.(sa|sc|c)ss$/,
+        test: /\.css$/,
         use: [
           {
             loader: 'css-loader',
@@ -59,29 +54,18 @@ module.exports = {
             },
           },
           {
+            loader: 'resolve-url-loader',
+            options: {
+              sourceMap: true,
+              root: '',
+            },
+          },
+          {
+            // PostCSS config at ./postcss.config.js
             loader: 'postcss-loader',
             options: {
               sourceMap: true,
               ident: 'postcss',
-              plugins: () =>
-                NODE_ENV === 'development'
-                  ? [postcssPresetEnv()] // Light processing for dev
-                  : [postcssPresetEnv(), cssnano()], // Heavy processing for prod
-            },
-          },
-          {
-            loader: 'resolve-url-loader',
-            options: {
-              sourceMap: true,
-            },
-          },
-          {
-            loader: 'sass-loader',
-            options: {
-              sourceMap: true,
-              // ALL Sass partials should be provided with non-printing
-              // variables, mixins, and functions
-              data: '@import "00-protons/variables";',
             },
           },
         ],
@@ -92,35 +76,32 @@ module.exports = {
         exclude: /node_modules/,
         loader: 'eslint-loader',
         options: {
-          emitWarning: true,
+          emitWarning: true, // development only
+          // emitWarning: false, // production only
         },
       },
       {
         test: /\.js$/,
+        // @babel runtime and core must NOT be transformed by babel
+        exclude: /@babel(?:\/|\\{1,2})runtime|core-js/,
         use: {
           loader: 'babel-loader',
         },
       },
       {
-        test: /\.(png|jpg|gif|svg)$/,
+        test: /\.(png|jpg|gif)$/,
         loader: 'file-loader',
         options: {
-          name: '[name].[ext]?[hash]',
+          name: 'images/[name].[ext]?[hash]',
         },
       },
       {
-        // base64 encode all referenced font files for simple loading.
         test: /\.(woff|woff2|eot|ttf|otf)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
         use: [
           {
-            loader: 'url-loader',
+            loader: 'file-loader',
             options: {
-              limit: 50000,
-
-              // If a font file is over 50k, output below fonts directory.
-              // This prevents massive .css file bloat.
-              name: '[name].[ext]',
-              outputPath: 'fonts/',
+              name: 'fonts/[name].[ext]?[hash]',
             },
           },
         ],
@@ -138,26 +119,24 @@ module.exports = {
   optimization: {
     minimizer: [
       new TerserPlugin({
-        cache: true,
-        parallel: true,
+        sourceMap: NODE_ENV === 'production',
       }),
     ],
   },
   plugins: [
-    new ProgressPlugin({ profile: false }),
     // Provides "global" vars mapped to an actual dependency. Allows e.g. jQuery
     // plugins to assume that `window.jquery` is available
     new ProvidePlugin({
-      // Bootstrap is dependant on jQuery and Popper
       $: 'jquery',
       jQuery: 'jquery',
       'window.jQuery': 'jquery',
-      Popper: ['popper.js', 'default'],
     }),
-    // Yell at us while writing Sass
-    new StyleLintPlugin(),
     // Handle .vue files
     new VueLoaderPlugin(),
+    // Only add ProgressPlugin for non-production env.
+    ...(NODE_ENV === 'production'
+      ? []
+      : [new ProgressPlugin({ profile: false })]),
   ],
   resolve: {
     alias: {

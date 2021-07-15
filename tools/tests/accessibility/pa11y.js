@@ -1,10 +1,14 @@
 // All non-protons PL paths
 const { componentPaths } = require('../../pl-paths.js');
 
-const plRoot = 'http://0.0.0.0:8080/app-pl/pl'; // @TODO: move this to config
+const { PL_BASE_DOMAIN } = process.env;
+
+// The PL_BASE_DOMAIN environment variable should be set to override the default.
+const plRootDomain = PL_BASE_DOMAIN || '0.0.0.0:8080';
+const plRoot = `http://${plRootDomain}/app-pl/pl`;
 
 // urls comes from particle, includes all demo paths from atoms+
-let urls = componentPaths.map(partial => `${plRoot}/${partial}`);
+let urls = componentPaths.map((partial) => `${plRoot}/${partial}`);
 
 // prod is any other links that need checked
 const prod = [];
@@ -19,7 +23,7 @@ module.exports = {
   defaults: {
     chromeLaunchConfig: {
       // this is needed to run in docker
-      args: ["--no-sandbox"]
+      args: ['--no-sandbox'],
     },
     hideElements: 'img[data-holder-rendered]',
     ignore: [

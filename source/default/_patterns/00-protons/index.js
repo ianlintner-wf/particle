@@ -2,9 +2,10 @@
  * Base css generation and global js logic.
  */
 
-import './_base.scss';
+import './tailwind.tokens.css';
 
 // Export global variables.
 export default {
-  GLOBAL_CONSTANT: 'blerp',
+  // Demo only, remove in practice
+  GLOBAL_CONSTANT: 'particle',
 };
